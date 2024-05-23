@@ -14,5 +14,5 @@ type Counter struct {
 func (c *Counter) Inc() {
     c.mux.Lock()
 	c.n++
-    defer c.mux.Unlock()
+    c.mux.Unlock()
 }
