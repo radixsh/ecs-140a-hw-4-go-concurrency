@@ -1,9 +1,5 @@
 package nfa
 
-import (
-    "fmt"
-)
-
 // A nondeterministic Finite Automaton (NFA) consists of states,
 // symbols in an alphabet, and a transition function.
 
@@ -32,26 +28,30 @@ func Reachable(
         return start == final
     }
 
-    state_ch := make(chan []state)
-    input_ch := make(chan []uint)
+    state_ch := make(chan state, 10)
+    input_ch := make(chan rune, 10)
    
     // Populate with the first stuff
     state_ch <- transitions(start, input[0])
     input_ch <- input[0]
 
     count := 0
+    var accessible_states []state
     for next_input := range input_ch {
         for next_state := range state_ch {
-            // fmt.Print(next)
-            accessible_states := <- ch
-            state_ch <- transitions(current_state[0], input[count])
+            accessible_states := <- state_ch
+            state_ch <- transitions(next_state, next_input)
+            count++
             input_ch <- input[count]
-            // if Reachable(transitions, next, final, input[1:]) {
-            //     return true
-            // }
         }
     }
 
+	// return accessible_states.contains(final)
+	for _, st := range accessible_states {
+		if st == final {
+			return true
+		}
+	}
     return false
 
     /*
