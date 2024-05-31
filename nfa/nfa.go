@@ -1,5 +1,8 @@
 package nfa
 
+import (
+    "runtime"
+)
 // A nondeterministic Finite Automaton (NFA) consists of states,
 // symbols in an alphabet, and a transition function.
 
@@ -24,90 +27,18 @@ func Reachable(
 	// `input` is a (possible empty) list of symbols to apply.
 	input []rune,
 ) bool {
-    if len(input) == 0 {
-        return start == final
+    ch := make(chan bool, 10)
+    for _, next := range transitions(start, input[0]) {
+        ch <- Reachable(transitions, next, final, input[1:])
+        runtime.NumGoroutine()
     }
+    close(ch)
 
-    state_ch := make(chan state, 10)
-    input_ch := make(chan rune, 10)
-   
-    // Populate with the first stuff
-    state_ch <- transitions(start, input[0])
-    input_ch <- input[0]
-
-    count := 0
-    var accessible_states []state
-    for next_input := range input_ch {
-        for next_state := range state_ch {
-            accessible_states := <- state_ch
-            state_ch <- transitions(next_state, next_input)
-            count++
-            input_ch <- input[count]
+    // Return true if anything in ch is true
+    for bit := range ch {
+        if bit {
+            return true
         }
     }
-
-	// return accessible_states.contains(final)
-	for _, st := range accessible_states {
-		if st == final {
-			return true
-		}
-	}
     return false
-
-    /*
-    // Asynchronously get all the states reachable from the first state via the
-    // first input rune. Save them to a channel.
-    ch := make(chan []state)
-    ch <- transitions(st, char)
-    // Then, for each state in that array, keep following down asynchronously,
-    // popping runes every time.
-    for state := range ch {
-
-
-    }
-    // Once all the runes are done, see if the provided "final state" is an
-    // element of the set.
-    // locking it before writing to ensure no race conditions.
-    // append them to a growing list
-
-	old_states := []state{start}
-    ch := make(chan []state, 1)
-	for _, char := range input {
-		new_states := []state{}
-		for _, st := range old_states {
-            // Send return value of transitions() fn call into channel
-            ch <- transitions(st, char)
-			new_states = append(new_states, <- ch)
-		}
-		old_states = new_states
-	}
-
-	for _, st := range old_states {
-		if st == final {
-			return true
-		}
-	}
-	return false
-
-    // divide here
-
-	old_states := []state{start}
-    ch := make(chan []state, 1)
-	for _, char := range input {
-		new_states := []state{}
-		for _, st := range old_states {
-            // Send return value of transitions() fn call into channel
-            ch <- transitions(st, char)
-			new_states = append(new_states, <- ch)
-		}
-		old_states = new_states
-	}
-
-	for _, st := range old_states {
-		if st == final {
-			return true
-		}
-	}
-	return false
-    */
 }
