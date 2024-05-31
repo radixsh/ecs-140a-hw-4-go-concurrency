@@ -12,7 +12,7 @@ func bug2(n int, foo func(int) int, out chan int) {
 			out <- foo(i)
 			wg.Done()
 		}()
+        wg.Wait()
 	}
-	wg.Wait()
 	close(out)
 }
