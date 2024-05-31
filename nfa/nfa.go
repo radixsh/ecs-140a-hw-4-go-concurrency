@@ -24,6 +24,74 @@ func Reachable(
 	// `input` is a (possible empty) list of symbols to apply.
 	input []rune,
 ) bool {
-	// TODO
-	panic("TODO: implement this!")
+    if len(input) == 0 {
+        return start == final
+    }
+
+    // ch :- make(chan []state)
+    // ch <- transitions(start, input[0])
+    for _, nextState := range transitions(start, input[0]) {
+        if Reachable(transitions, nextState, final, input[1:]) {
+            return
+        }
+    }
+
+    return false
+
+    /*
+    // Asynchronously get all the states reachable from the first state via the
+    // first input rune. Save them to a channel.
+    ch := make(chan []state)
+    ch <- transitions(st, char)
+    // Then, for each state in that array, keep following down asynchronously,
+    // popping runes every time.
+    for state := range ch {
+
+
+    }
+    // Once all the runes are done, see if the provided "final state" is an
+    // element of the set.
+    // locking it before writing to ensure no race conditions.
+    // append them to a growing list
+
+	old_states := []state{start}
+    ch := make(chan []state, 1)
+	for _, char := range input {
+		new_states := []state{}
+		for _, st := range old_states {
+            // Send return value of transitions() fn call into channel
+            ch <- transitions(st, char)
+			new_states = append(new_states, <- ch)
+		}
+		old_states = new_states
+	}
+
+	for _, st := range old_states {
+		if st == final {
+			return true
+		}
+	}
+	return false
+
+    // divide here
+
+	old_states := []state{start}
+    ch := make(chan []state, 1)
+	for _, char := range input {
+		new_states := []state{}
+		for _, st := range old_states {
+            // Send return value of transitions() fn call into channel
+            ch <- transitions(st, char)
+			new_states = append(new_states, <- ch)
+		}
+		old_states = new_states
+	}
+
+	for _, st := range old_states {
+		if st == final {
+			return true
+		}
+	}
+	return false
+    */
 }
