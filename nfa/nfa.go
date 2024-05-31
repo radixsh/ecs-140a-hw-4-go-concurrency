@@ -1,8 +1,5 @@
 package nfa
 
-import (
-    "runtime"
-)
 // A nondeterministic Finite Automaton (NFA) consists of states,
 // symbols in an alphabet, and a transition function.
 
@@ -27,10 +24,13 @@ func Reachable(
 	// `input` is a (possible empty) list of symbols to apply.
 	input []rune,
 ) bool {
+    if len(input) == 0 {
+        return start == final
+    }
+
     ch := make(chan bool, 10)
     for _, next := range transitions(start, input[0]) {
         ch <- Reachable(transitions, next, final, input[1:])
-        runtime.NumGoroutine()
     }
     close(ch)
 
