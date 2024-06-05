@@ -15,13 +15,14 @@ type Counter struct {
 
 func (c *Counter) Increment(key uint32) {
     c.mux.Lock()
-    defer c.mux.Unlock()
     c.entries[key]++
+    c.mux.Unlock()
 }
 
-// {"foo", returnZero, map[uint32]uint{0: 1}},
-// The call "Smash(strings.NewReader("foo"), returnZero)" should return {0:1}
 func Smash(r io.Reader, smasher func(word) uint32) map[uint32]uint {
+    // From https://go.dev/play/p/Z_Td6Kn_hMT
+    var wg sync.WaitGroup
+    
     c := Counter{
         entries: make(map[uint32]uint),
     }
@@ -31,17 +32,21 @@ func Smash(r io.Reader, smasher func(word) uint32) map[uint32]uint {
     
     // For each word in r,
     for scanner.Scan() {
-        str := word(scanner.Text())
-        
         // Call smasher() on that word
-        to_append := uint32(smasher(str))
+        to_append := uint32(smasher(word(scanner.Text())))
+        
+        wg.Add(1)
 
-        // Call smasher() on the word
         // Create an entry in the dict whose KEY is the return val of smasher(word)
         // and the VALUE is 1.
         // If that entry already exists, increment it
-        c.Increment(to_append)
+        go func() {
+            c.Increment(to_append)
+            wg.Done()
+        }()
     }
-	
+
+    wg.Wait()
+
     return c.entries
 }
